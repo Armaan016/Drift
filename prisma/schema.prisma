@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  name      String?
+  email     String?   @unique
+  image     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  username  String    @unique
+  accounts  Account[]
+  sessions  Session[]
+  posts     Post[] // ✅ Relation: User → Posts
+  comments  Comment[] // ✅ Relation: User → Comments
+  followers Follow[]  @relation("followers") // ✅ Follow relation
+  following Follow[]  @relation("following") // ✅ Follow relation
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  access_token      String?
+  expires_at        Int?
+  id_token          String?
+  refresh_token     String?
+  scope             String?
+  session_state     String?
+  token_type        String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  content   String
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  comments Comment[] // ✅ Relation: Post → Comments
+
+  @@index([userId])
+}
+
+model Follow {
+  id          String @id @default(uuid())
+  followerId  String
+  followingId String
+
+  follower  User @relation(fields: [followerId], references: [id], onDelete: Cascade, name: "followers")
+  following User @relation(fields: [followingId], references: [id], onDelete: Cascade, name: "following")
+
+  @@unique([followerId, followingId]) // Prevent duplicate follows
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  imageUrl  String? // ✅ Optional: Image support for comments
+  voiceUrl  String? // ✅ Optional: Voice memo support
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
