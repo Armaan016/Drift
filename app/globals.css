@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* @import url('https://fonts.googleapis.com/css2?family=Inter&display=swap'); */
+
+body {
+  font-family: var(--font-sora), sans-serif;
+}
+
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -116,6 +123,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }

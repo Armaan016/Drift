@@ -54,7 +54,7 @@ export async function GET() {
   console.log("User follows:", followingIds); // Debug log ✅
 
   const posts = await prisma.post.findMany({
-    where: { userId: { in: [...followingIds, session.user.id] } },
+    where: { userId: { in: [...followingIds] } },
     include: { user: true },
     orderBy: { createdAt: "desc" },
   });
