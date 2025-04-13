@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import PageHeader from "../components/PageHeader";
 
 interface User {
     id: string;
@@ -103,9 +104,28 @@ export default function Home() {
     }
 
     const calculateTimeAgo = (createdAt: string) => {
-        const diff = Math.floor((new Date().getTime() - new Date(createdAt).getTime()) / (1000 * 3600));
-        return `${diff} hour${diff !== 1 ? "s" : ""} ago`;
+        const now = new Date().getTime();
+        const created = new Date(createdAt).getTime();
+        const diffInMs = now - created;
+
+        const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+        const days = Math.floor(diffInHours / 24);
+        const hours = diffInHours % 24;
+
+        let result = "";
+
+        if (days > 0) {
+            result += `${days} day${days !== 1 ? "s" : ""}`;
+        }
+
+        if (hours > 0 || days === 0) {
+            if (result) result += " ";
+            result += `${hours} hour${hours !== 1 ? "s" : ""}`;
+        }
+
+        return result + " ago";
     };
+
 
     const toggleComments = (postId: string) => {
         setPosts((prev) =>
@@ -149,6 +169,7 @@ export default function Home() {
 
                 {/* Main Content */}
                 <main className="flex-grow max-w-3xl">
+                    <PageHeader title="Home" icon="🏠" />
                     {postsLoading ? (
                         Array.from({ length: 3 }).map((_, idx) => (
                             <div key={idx} className="bg-gray-800 p-4 rounded-lg mb-4 animate-pulse">

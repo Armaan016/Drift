@@ -39,27 +39,51 @@ export async function POST(req: Request) {
 }
 
 // 🚀 Get posts from followed users
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  console.log("Fetching posts for user:", session.user.id); // Debug log ✅
+  const url = new URL(req.url || "");
+  const explore = url.searchParams.get("explore");
 
-  const following = await prisma.follow.findMany({
-    where: { followerId: session.user.id },
-    select: { followingId: true },
-  });
+  console.log("📡 Explore mode:", explore === "true");
 
-  const followingIds = following.map(f => f.followingId);
-  console.log("User follows:", followingIds); // Debug log ✅
+  let posts;
 
-  const posts = await prisma.post.findMany({
-    where: { userId: { in: [...followingIds] } },
-    include: { user: true },
-    orderBy: { createdAt: "desc" },
-  });
+  if (explore === "true") {
+    // Fetch all posts, optionally excluding the current user's own posts
+    posts = await prisma.post.findMany({
+      where: {
+        userId: {
+          // not: session.user.id, // 👈 Remove this line if you want your own posts too
+        },
+      },
+      include: { user: true },
+      orderBy: { createdAt: "desc" },
+    });
 
-  console.log("Fetched posts:", posts); // Debug log ✅
+    console.log("🧭 Explore posts fetched:", posts.length);
+  } else {
+    // Home feed: posts from followed users
+    const following = await prisma.follow.findMany({
+      where: { followerId: session.user.id },
+      select: { followingId: true },
+    });
+
+    const followingIds = following.map(f => f.followingId);
+    console.log("User follows:", followingIds);
+
+    posts = await prisma.post.findMany({
+      where: { userId: { in: followingIds } },
+      include: { user: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    console.log("🏠 Home posts fetched:", posts.length);
+  }
 
   return NextResponse.json(posts);
 }
+

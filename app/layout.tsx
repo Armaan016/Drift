@@ -1,4 +1,3 @@
-// app/layout.tsx or pages/_app.tsx
 import './globals.css'
 import Provider from './components/SessionProvider'
 

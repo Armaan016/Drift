@@ -13,6 +13,7 @@ export async function GET(req: Request) {
     const userId = searchParams.get("userId");
     if (!userId) return NextResponse.json({ error: "User ID required" }, { status: 400 });
 
+    console.log("Fetching profile for userId:", userId);
     // Fetch user details
     const user = await prisma.user.findUnique({
         where: { id: userId },
