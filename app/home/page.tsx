@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import PageHeader from "../components/PageHeader";
 
 interface User {
@@ -36,6 +36,7 @@ export default function Home() {
     const [usersLoading, setUsersLoading] = useState(true);
 
     const router = useRouter();
+    const pathname = usePathname();
 
     // Fetch posts and comments
     useEffect(() => {
@@ -154,21 +155,55 @@ export default function Home() {
 
 
             {/* Page Body */}
-            <div className="flex flex-grow px-4 py-6">
-
+            <div className="flex flex-grow px-4 py-6 gap-6 h-[calc(100vh-80px)]">
                 {/* Left Navigation Panel */}
-                <aside className="w-60 bg-gray-800 p-4 rounded-lg mr-4 h-fit sticky top-20">
-                    <nav className="flex flex-col gap-4 text-white">
-                        <Link href="/home" className="hover:text-blue-400">🏠 Home</Link>
-                        <Link href="/explore" className="hover:text-blue-400">🔍 Explore</Link>
-                        <Link href="/settings" className="hover:text-blue-400">⚙️ Settings</Link>
-                        <Link href="/notifications" className="hover:text-blue-400">🔔 Notifications</Link>
-                        <Link href="/messages" className="hover:text-blue-400">💬 Messages</Link>
+                <aside className="w-64 bg-gray-800 p-6 min-h-full sticky top-[80px] flex flex-col gap-6 shadow-lg">
+
+                    <h1 className="text-3xl font-extrabold mb-2 text-white">Menu</h1>
+                    <hr className="border-gray-700 mb-4" />
+
+                    <nav className="flex flex-col gap-4 text-white text-lg">
+                        <Link
+                            href="/home"
+                            className={`py-2 px-3 rounded-lg transition-colors duration-200 hover:bg-blue-700 hover:text-white ${pathname === "/home" ? "bg-blue-600 text-white font-semibold" : ""
+                                }`}
+                        >
+                            🏠 Home
+                        </Link>
+                        <Link
+                            href="/explore"
+                            className={`py-2 px-3 rounded-lg transition-colors duration-200 hover:bg-blue-700 hover:text-white ${pathname === "/explore" ? "bg-blue-600 text-white font-semibold" : ""
+                                }`}
+                        >
+                            🔍 Explore
+                        </Link>
+                        <Link
+                            href="/notifications"
+                            className={`py-2 px-3 rounded-lg transition-colors duration-200 hover:bg-blue-700 hover:text-white ${pathname === "/notifications" ? "bg-blue-600 text-white font-semibold" : ""
+                                }`}
+                        >
+                            🔔 Notifications
+                        </Link>
+                        <Link
+                            href="/messages"
+                            className={`py-2 px-3 rounded-lg transition-colors duration-200 hover:bg-blue-700 hover:text-white ${pathname === "/messages" ? "bg-blue-600 text-white font-semibold" : ""
+                                }`}
+                        >
+                            💬 Messages
+                        </Link>
+                        <Link
+                            href="/settings"
+                            className={`py-2 px-3 rounded-lg transition-colors duration-200 hover:bg-blue-700 hover:text-white ${pathname === "/settings" ? "bg-blue-600 text-white font-semibold" : ""
+                                }`}
+                        >
+                            ⚙️ Settings
+                        </Link>
                     </nav>
                 </aside>
 
+
                 {/* Main Content */}
-                <main className="flex-grow max-w-3xl">
+                <main className="flex-grow max-w-4xl h-full overflow-y-auto pr-4">
                     <PageHeader title="Home" icon="🏠" />
                     {postsLoading ? (
                         Array.from({ length: 3 }).map((_, idx) => (
@@ -208,7 +243,7 @@ export default function Home() {
                                 </button>
 
                                 {post.showComments && (
-                                    <div className="mt-4">
+                                    <div className="mt-4 space-y-3">
                                         {post.comments.length > 0 ? (
                                             post.comments.map((comment) => (
                                                 <div key={comment.id} className="flex gap-3 items-start p-2">
@@ -226,8 +261,51 @@ export default function Home() {
                                                 </div>
                                             ))
                                         ) : (
-                                            <p>No comments yet.</p>
+                                            <p className="text-gray-400">No comments yet. Be the first to say something!</p>
                                         )}
+
+                                        {/* Add Comment Form */}
+                                        <form
+                                            onSubmit={async (e) => {
+                                                e.preventDefault();
+                                                const form = e.currentTarget;
+                                                const input = form.elements.namedItem("comment") as HTMLInputElement;
+                                                const newComment = input.value.trim();
+                                                if (!newComment) return;
+
+                                                const res = await fetch("/api/comments", {
+                                                    method: "POST",
+                                                    headers: { "Content-Type": "application/json" },
+                                                    body: JSON.stringify({ postId: post.id, content: newComment }),
+                                                });
+
+                                                if (res.ok) {
+                                                    const comment = await res.json();
+                                                    setPosts((prev) =>
+                                                        prev.map((p) =>
+                                                            p.id === post.id
+                                                                ? { ...p, comments: [...p.comments, comment] }
+                                                                : p
+                                                        )
+                                                    );
+                                                    input.value = "";
+                                                }
+                                            }}
+                                            className="flex items-center gap-2 mt-2"
+                                        >
+                                            <input
+                                                type="text"
+                                                name="comment"
+                                                placeholder="Write a comment..."
+                                                className="flex-grow p-2 rounded bg-gray-700 text-white"
+                                            />
+                                            <button
+                                                type="submit"
+                                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm"
+                                            >
+                                                Post
+                                            </button>
+                                        </form>
                                     </div>
                                 )}
                             </div>
@@ -236,7 +314,7 @@ export default function Home() {
                 </main>
 
                 {/* Right Sidebar: Other Users */}
-                <aside className="w-80 bg-gray-800 p-4 rounded-lg ml-4 h-fit sticky top-20">
+                <aside className="w-80 bg-gray-800 p-4 rounded-lg h-full overflow-y-auto sticky top-[80px]">
                     <h3 className="text-lg font-bold mb-4">Other Users:</h3>
                     {usersLoading ? (
                         Array.from({ length: 3 }).map((_, idx) => (
