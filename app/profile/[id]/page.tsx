@@ -72,6 +72,25 @@ export default function ProfilePage() {
     }
   };
 
+  const handleMessage = async () => {
+    try {
+      const res = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        window.location.href = `/messages/${data.conversationId}`;
+      } else {
+        console.error('Failed to start conversation');
+      }
+    } catch (err) {
+      console.error('Error starting conversation:', err);
+    }
+  };
+
   if (error) return notFound();
   if (!user) return <p className="text-white">Loading...</p>;
 
@@ -113,6 +132,13 @@ export default function ProfilePage() {
             >
               {isFollowing ? "Unfollow" : "Follow"}
             </button>
+            <button
+              onClick={handleMessage}
+              className="px-5 py-2 rounded text-sm font-semibold transition bg-green-600 hover:bg-green-700"
+            >
+              Message
+            </button>
+
           </div>
 
           {posts.length === 0 ? (
